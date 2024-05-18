@@ -1,0 +1,7 @@
+.login-ctn {
+  display: flex !important;
+  justify-content: center !important;
+
+  height: 90vh;
+  margin: 20px;
+}
