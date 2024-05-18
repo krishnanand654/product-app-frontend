@@ -67,6 +67,7 @@ const Login = () => {
             if (response.status == 200) {
                 localStorage.setItem("accessToken", response.data.accessToken);
                 localStorage.setItem("refreshToken", response.data.refreshToken);
+                localStorage.setItem("expiresIn", response.data.expiresIn);
                 setLoading(false);
                 navigate('/home');
             }
