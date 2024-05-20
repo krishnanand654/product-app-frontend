@@ -2,11 +2,16 @@ import { Input, Button } from "@nextui-org/react";
 import { useEffect, useState } from "react";
 import axios from 'axios';
 import { useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from 'react-redux';
+import { setLoginStatus } from '../../redux/actions'
 import './Login.css';
 
 
 
 const Login = () => {
+    const loginStatus = useSelector(state => state.loginStatus);
+    const dispatch = useDispatch();
+
     const [credentials, setCredentials] = useState({ username: "", email: "", password: "" });
     const [error, setError] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
@@ -36,8 +41,22 @@ const Login = () => {
 
         } else {
 
+            if (credentials.password != '') {
+                const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+}{":;'?/>.<,])(?=.{8,})/;
+
+                if (!passwordRegex.test(credentials.password)) {
+                    setError(true)
+                    setErrorMessage("Password should be of length 8, Must include atleast one Capital Letter, number and special characters")
+                } else {
+                    setError(false);
+                }
+
+
+            }
+
             if (credentials.username != '' && credentials.password != '' && credentials.email != '') {
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
                 if (emailRegex.test(credentials.email)) {
                     setValid(true);
                 } else {
@@ -68,6 +87,7 @@ const Login = () => {
                 localStorage.setItem("accessToken", response.data.accessToken);
                 localStorage.setItem("refreshToken", response.data.refreshToken);
                 localStorage.setItem("expiresIn", response.data.expiresIn);
+                dispatch(setLoginStatus(true));
                 setLoading(false);
                 navigate('/home');
             }
@@ -101,8 +121,8 @@ const Login = () => {
         } catch (error) {
             console.error('Error login:', error.response.status);
             if (error.response.status == 400) {
+                setError(true);
                 setErrorMessage(error.response.data.message)
-                setError(true)
                 setLoading(false);
             }
         }
@@ -118,13 +138,14 @@ const Login = () => {
                 <img src="https://i.pinimg.com/originals/01/39/93/0139937c2f641ab61fd020844ccfd459.png" className="w-12" />
                 <h1 className="font-medium text-2xl">Login</h1>
                 <p>Not a user ? <button className="font-medium underline" onClick={() => { setSwitchRegister(!switchRegister) }}>{switchRegister ? "Sign in" : "Join us"}</button></p>
-                {error && <p className=" text-red-500">{errorMessage}</p>}
+                {/* {error && <p className=" text-red-500">{errorMessage}</p>} */}
                 <div className="flex flex-wrap gap-4 flex-row ">
                     {switchRegister && <Input type="email" label="Email" name="email" onChange={handleChange} className=" lg:w-96 md:w-full sm:w-full" isRequired />}
                     <Input type="text" label="Username" name="username" onChange={handleChange} className=" lg:w-96 md:w-full sm:w-full" isRequired />
                     <Input type="password" label="Password" name="password" onChange={handleChange} className=" lg:w-96 md:w-full sm:w-full" isRequired />
+                    {error && <p className="text-red-500 text-xs">{errorMessage}</p>}
                     <div className="w-full flex justify-end " >
-                        {switchRegister ? <Button radius="full" className="bg-black text-white font-medium" onClick={handleRegister} isLoading={loading} isDisabled={!valid} >
+                        {switchRegister ? <Button radius="full" className="bg-black text-white font-medium" onClick={handleRegister} isLoading={loading} isDisabled={!valid || error} >
                             Join us
                         </Button>
                             :

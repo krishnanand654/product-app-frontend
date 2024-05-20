@@ -1,10 +1,16 @@
+/* eslint-disable react/prop-types */
 import { useEffect, useState } from "react";
 import DragAndDrop from "../Upload/DragAndDrop/DragAndDrop";
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure } from "@nextui-org/react";
 import axios from "axios";
 import { Input } from "@nextui-org/react";
+import { useSelector, useDispatch } from 'react-redux';
+import { setInsertStatus } from '../../redux/actions'
 
-export default function AppModal({ status }) {
+export default function AppModal() {
+    const insertStatus = useSelector(state => state.insertStatus);
+    const dispatch = useDispatch();
+
     const token = localStorage.getItem("accessToken");
     const { isOpen, onOpen, onClose } = useDisclosure();
     const [backdrop, setBackdrop] = useState('opaque');
@@ -86,9 +92,8 @@ export default function AppModal({ status }) {
             if (dataResponse.status === 201) {
                 console.log("Inserted");
                 setLoading(false);
-                if (status) {
-                    status(true);
-                }
+                dispatch(setInsertStatus(true));
+
                 setValid(false);
                 productData.name = ''
                 productData.price = ''
@@ -117,9 +122,9 @@ export default function AppModal({ status }) {
                     variant="flat"
                     color="warning"
                     onPress={() => handleOpen("blur")}
-                    className="capitalize"
+                    className="capitalize mr-3 lg:mr-0"
                 >
-                    Open
+                    <img src="https://img.icons8.com/?size=19&id=db3aaXZdalCP&format=png&color=D1A052" /> Add Product
                 </Button>
             </div>
             <Modal backdrop={backdrop} isOpen={isOpen} onClose={handleClose}>
