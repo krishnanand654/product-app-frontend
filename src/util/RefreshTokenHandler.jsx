@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import axios from 'axios';
-
 const TokenService = {
     getTokensFromStorage() {
         const accessToken = localStorage.getItem('accessToken');
@@ -13,30 +12,31 @@ const TokenService = {
         localStorage.setItem('accessToken', accessToken);
     },
 
-    parseExpirationTime(expiresInString) {
-        const unitMap = { 's': 1000, 'm': 60 * 1000, 'h': 60 * 60 * 1000, 'd': 24 * 60 * 60 * 1000 };
-        const regex = /^(\d+)([smhd])$/;
-        const match = regex.exec(expiresInString);
-        if (!match || !unitMap[match[2]]) {
-            console.error('Invalid expiration time format:', expiresInString);
-            return null;
-        }
-        const duration = parseInt(match[1], 10);
-        return duration * unitMap[match[2]];
+    setExpirationTime(expiresIn) {
+        const expirationTime = Date.now() + parseInt(expiresIn, 10);
+        localStorage.setItem('expiresIn', expirationTime);
     },
 
     async refreshToken(refreshToken) {
         try {
             const response = await axios.post('http://localhost:3000/auth/refresh-token', { refreshToken });
-            const { accessToken, expiresIn } = response.data;
-            this.setAccessToken(accessToken);
-            const expirationTime = this.parseExpirationTime(expiresIn);
-            if (expirationTime !== null) {
-                const now = Date.now();
-                localStorage.setItem('expiresIn', now + expirationTime);
-            } else {
-                console.error('Failed to parse expiration time:', expiresIn);
+            const { accessToken } = response.data;
+
+            if (!accessToken) {
+                console.error('Invalid response from refresh token endpoint:', response.data);
+                throw new Error('Invalid response from refresh token endpoint');
             }
+
+            this.setAccessToken(accessToken);
+            console.log("refreshed");
+            // Assuming the same expiration time from the original token
+            const { expiresIn } = this.getTokensFromStorage();
+            if (expiresIn) {
+                this.setExpirationTime(expiresIn);
+            } else {
+                console.warn('No expiration time found in local storage.');
+            }
+
             return accessToken;
         } catch (error) {
             console.error('Error refreshing token:', error);
@@ -46,7 +46,10 @@ const TokenService = {
 
     isTokenExpired() {
         const expiresIn = parseInt(localStorage.getItem('expiresIn'), 10);
-        if (!expiresIn) return true;
+        if (isNaN(expiresIn)) {
+            console.error('Expiration time is invalid:', expiresIn);
+            return true;
+        }
         const currentTime = Date.now();
         return currentTime >= expiresIn;
     },
@@ -55,10 +58,13 @@ const TokenService = {
         if (this.isTokenExpired()) {
             const { refreshToken } = this.getTokensFromStorage();
             if (refreshToken) {
-                await this.refreshToken(refreshToken);
+                try {
+                    await this.refreshToken(refreshToken);
+                } catch (error) {
+                    console.error('Error during token refresh:', error);
+                }
             } else {
                 console.error('Refresh token not found.');
-
             }
         }
     }
@@ -71,14 +77,17 @@ const TokenRefreshHandler = () => {
                 await TokenService.checkAndRefreshTokenIfNeeded();
             } catch (error) {
                 console.error('Error refreshing access token:', error);
-
             }
         };
-        console.log("refreshed");
+
+        console.log("Token refresh interval started");
         const tokenRefreshInterval = setInterval(refreshAccessToken, 60000);
+        console.log(tokenRefreshInterval);
 
-
-        return () => clearInterval(tokenRefreshInterval);
+        return () => {
+            console.log("Token refresh interval cleared");
+            clearInterval(tokenRefreshInterval);
+        };
     }, []);
 
     return null;

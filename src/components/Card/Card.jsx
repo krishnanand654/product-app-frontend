@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 const Card = ({ name, description, image, price }) => {
     return (
-        <div className="lg:w-80 md:w-48 sm:w-24">
+        <div className="lg:w-80 md:w-48 sm:w-24 cursor-pointer">
             <img src={image} />
             <div className="ml-3 lg:m-0">
                 <h1 className="font-medium pt-2">{name}</h1>

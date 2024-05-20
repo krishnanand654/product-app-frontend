@@ -18,7 +18,6 @@ const Login = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        console.log(e.target)
         setCredentials((prevCredentials) => ({
             ...prevCredentials,
             [name]: value,
@@ -54,7 +53,7 @@ const Login = () => {
     }, [credentials])
 
 
-    console.log(credentials)
+
 
     const handleLogin = async () => {
 
@@ -65,6 +64,7 @@ const Login = () => {
                 password: credentials.password
             });
             if (response.status == 200) {
+                localStorage.setItem("username", credentials.username);
                 localStorage.setItem("accessToken", response.data.accessToken);
                 localStorage.setItem("refreshToken", response.data.refreshToken);
                 localStorage.setItem("expiresIn", response.data.expiresIn);
@@ -93,6 +93,7 @@ const Login = () => {
             });
             if (response.status == 201) {
                 setLoading(false);
+                navigate('/');
             } else {
                 console.log(response)
             }

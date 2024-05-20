@@ -1,9 +1,16 @@
 import React from "react";
 import { Navbar, NavbarBrand, NavbarMenuToggle, NavbarMenuItem, NavbarMenu, NavbarContent, NavbarItem, Link } from "@nextui-org/react";
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar } from "@nextui-org/react";
+import { useNavigate } from "react-router-dom";
 
 export default function AppNavbar() {
     const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+    const nav = useNavigate();
+
+    const logout = () => {
+        localStorage.clear();
+        nav('/');
+    }
 
     const menuItems = [
         "Home",
@@ -48,17 +55,18 @@ export default function AppNavbar() {
                         <Avatar
                             isBordered
                             as="button"
-                            className="transition-transform"
-                            src="https://as2.ftcdn.net/v2/jpg/03/31/69/91/1000_F_331699188_lRpvqxO5QRtwOM05gR50ImaaJgBx68vi.jpg"
+                            className="transition-transform md:w-10 md:h-10"
                         />
                     </DropdownTrigger>
                     <DropdownMenu aria-label="Profile Actions" variant="flat">
                         <DropdownItem key="profile" className="h-14 gap-2">
                             <p className="font-semibold">Signed in as</p>
-                            <p className="font-semibold">zoey@example.com</p>
+                            <p className="font-semibold">{localStorage.getItem("username")}</p>
                         </DropdownItem>
 
-                        <DropdownItem key="logout" color="danger">
+
+
+                        <DropdownItem key="logout" color="danger" onClick={logout}>
                             Log Out
                         </DropdownItem>
                     </DropdownMenu>
