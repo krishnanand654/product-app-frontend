@@ -2,14 +2,19 @@ import React from "react";
 import { Navbar, NavbarBrand, NavbarMenuToggle, NavbarMenuItem, NavbarMenu, NavbarContent, NavbarItem, Link } from "@nextui-org/react";
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar } from "@nextui-org/react";
 import { useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { setLoginStatus } from "../../redux/actions";
 import AppModal from "../AppModal/AppModal";
 
 export default function AppNavbar() {
     const [isMenuOpen, setIsMenuOpen] = React.useState(false);
     const nav = useNavigate();
 
+    const dispatch = useDispatch();
+
     const logout = () => {
         localStorage.clear();
+        dispatch(setLoginStatus(false));
         nav('/');
     }
 

@@ -10,6 +10,7 @@ import './Login.css';
 
 const Login = () => {
     const loginStatus = useSelector(state => state.loginStatus);
+
     const dispatch = useDispatch();
 
     const [credentials, setCredentials] = useState({ username: "", email: "", password: "" });
@@ -113,7 +114,7 @@ const Login = () => {
             });
             if (response.status == 201) {
                 setLoading(false);
-                navigate('/');
+                setSwitchRegister(false);
             } else {
                 console.log(response)
             }

@@ -4,11 +4,12 @@ import DragAndDrop from "../Upload/DragAndDrop/DragAndDrop";
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure } from "@nextui-org/react";
 import axios from "axios";
 import { Input } from "@nextui-org/react";
-import { useSelector, useDispatch } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { setInsertStatus } from '../../redux/actions'
+import RefreshTokenHandler from "../../util/RefreshTokenHandler";
 
 export default function AppModal() {
-    const insertStatus = useSelector(state => state.insertStatus);
+
     const dispatch = useDispatch();
 
     const token = localStorage.getItem("accessToken");
@@ -19,6 +20,17 @@ export default function AppModal() {
     const [valid, setValid] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [retry, setRetry] = useState(false);
+
+    useEffect(() => {
+        if (retry) {
+            onSubmit();
+            setRetry(false);
+        }
+
+
+    }, [retry])
+
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -43,7 +55,7 @@ export default function AppModal() {
     }
 
     const handleFileSelect = (file) => {
-        setSelectedFile(file); // Update state with the selected file
+        setSelectedFile(file);
     };
 
 
@@ -52,10 +64,10 @@ export default function AppModal() {
 
         if (productData.name == '' || productData.price == '' || productData.description == '' || selectedFile == null) {
             setValid(false);
-            console.log("not valid");
+
         } else {
             setValid(true);
-            console.log("valid");
+
         }
     }, [productData, selectedFile])
 
@@ -66,50 +78,84 @@ export default function AppModal() {
             if (selectedFile) {
                 const formData = new FormData();
                 formData.append('file', selectedFile);
+                try {
 
-                const fileResponse = await axios.post('http://localhost:3000/files/upload', formData, {
+                    const fileResponse = await axios.post('http://localhost:3000/files/upload', formData, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'multipart/form-data',
+                        }
+                    });
+
+
+                    if (fileResponse.status == 200) {
+                        productData.image_id = fileResponse.data.fileId;
+                    }
+                } catch (error) {
+                    if (error.response.status === 403) {
+                        try {
+                            RefreshTokenHandler();
+
+                        } catch (refreshError) {
+                            console.error("Error refreshing token:", refreshError);
+                            setError(refreshError.response.data.error);
+                        }
+                    } else {
+                        console.error("Error inserting product:", error);
+                        setError(error.response.data.error);
+                    }
+                }
+
+                setLoading(false);
+            }
+            try {
+
+                const dataResponse = await axios.post('http://localhost:3000/products/create', productData, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'multipart/form-data',
+                        'Content-Type': 'application/json',
                     }
                 });
 
+                if (dataResponse.status === 201) {
+                    console.log("Inserted");
+                    setLoading(false);
+                    dispatch(setInsertStatus(true));
 
-                if (fileResponse.status == 200) {
-                    productData.image_id = fileResponse.data.fileId;
+                    setValid(false);
+                    productData.name = ''
+                    productData.price = ''
+                    productData.description = ''
+                    setSelectedFile(null)
+
+                    onClose();
+                } else {
+                    console.log("Not inserted");
+
+                    setLoading(false);
                 }
-                setLoading(false);
-            }
+            } catch (error) {
+                if (error.response.status === 403) {
+                    console.log("try refreshing")
+                    try {
+                        if (RefreshTokenHandler) {
+                            setRetry(true);
+                        } else {
+                            console.log("login again")
+                        }
 
-
-            const dataResponse = await axios.post('http://localhost:3000/products/create', productData, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
+                    } catch (refreshError) {
+                        console.error("Error refreshing token:", refreshError);
+                        setError(refreshError.response.data.error);
+                    }
+                } else {
+                    console.error("Error inserting product:", error);
+                    setError(error.response.data.error);
                 }
-            });
-
-            if (dataResponse.status === 201) {
-                console.log("Inserted");
-                setLoading(false);
-                dispatch(setInsertStatus(true));
-
-                setValid(false);
-                productData.name = ''
-                productData.price = ''
-                productData.description = ''
-                setSelectedFile(null)
-
-                onClose();
-            } else {
-                console.log("Not inserted");
-
-                setLoading(false);
             }
         } catch (error) {
+
             setLoading(false);
-            console.error("Error inserting product:", error);
-            setError(error.response.data.error)
         }
     }
 
