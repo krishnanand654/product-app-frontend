@@ -1,8 +1,11 @@
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
+
+
 const RefreshTokenHandler = async () => {
-    const nav = useNavigate();
+
+
     console.log("refreshing token");
     try {
         const refreshToken = localStorage.getItem("refreshToken");
@@ -22,7 +25,7 @@ const RefreshTokenHandler = async () => {
         }
     } catch (error) {
         console.error("Failed to refresh token:", error);
-        nav('/');
+        window.location.href = "/"
         return false;
     }
 };
