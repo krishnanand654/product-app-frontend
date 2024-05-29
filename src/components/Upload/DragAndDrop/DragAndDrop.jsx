@@ -27,7 +27,7 @@ const DragAndDrop = ({ onFileSelect }) => {
         onChange(info) {
             const { status } = info.file;
             if (status !== 'uploading') {
-                console.log(info.file);
+                // console.log(info.file);
             }
             if (status === 'done') {
                 message.success(`${info.file.name} file uploaded successfully.`);

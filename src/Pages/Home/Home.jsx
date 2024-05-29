@@ -2,11 +2,12 @@ import axios from 'axios';
 import { useEffect, useState } from 'react';
 import Card from '../../components/Card/Card';
 import AppNavbar from '../../components/AppNavbar/AppNavbar';
-import AppModal from '../../components/AppModal/AppModal';
 import { useSelector, useDispatch } from 'react-redux';
 import { setInsertStatus } from '../../redux/actions';
 import { message } from 'antd';
 import RefreshTokenHandler from '../../util/RefreshTokenHandler';
+import NewAppModal from '../../components/NewAppModal/NewAppModal';
+// import useRefreshToken from '../../util/RefreshTokenHandler';
 
 const Home = () => {
     const [data, setData] = useState([]);
@@ -19,17 +20,22 @@ const Home = () => {
     };
 
     const insertStatus = useSelector(state => state.insertStatus);
+    const newtoken = useSelector(state => state.token);
     const dispatch = useDispatch();
-    const token = localStorage.getItem("accessToken");
+    const token = localStorage.getItem("accessToken") || newtoken;
+
+
 
     useEffect(() => {
-
         fetchData();
         dispatch(setInsertStatus(false));
 
-    }, [insertStatus]);
+    }, [insertStatus,]);
+
+
 
     const fetchData = async () => {
+
         try {
             const response = await axios.get("http://localhost:3000/products/", {
                 headers: {
@@ -55,24 +61,28 @@ const Home = () => {
                             return product;
                         }
                     } catch (error) {
-                        console.error(`Error fetching image for product ${product._id}:`, error);
+                        console.error(`Error fetching image for product ${product._id}:`, error.message || error);
                         return product;
                     }
                 }));
 
                 setData(productsWithImages);
+            } else {
+                console.error("Invalid response structure:", response);
             }
         } catch (error) {
             if (error.response && error.response.status === 403) {
                 const refreshed = await RefreshTokenHandler();
                 if (refreshed) {
-                    fetchData();
+                    dispatch(setInsertStatus(true));
                 }
             } else {
-                console.error("Error fetching data:", error);
+                console.error("Error fetching data:", error.message || error);
             }
         }
+
     };
+
 
     const handleDelete = async (id, image_id) => {
         try {
@@ -114,7 +124,9 @@ const Home = () => {
             <AppNavbar />
             <div className='lg:mt-2 mb-36 lg:m-[250px] rounded-lg'>
                 <div className='w-full flex justify-end mb-3 mt-3 sm:mr-2'>
-                    <AppModal />
+                    {/* <AppModal />
+                     */}
+                    <NewAppModal />
                 </div>
                 <div className='flex flex-wrap gap-6 justify-start '>
                     {data.length > 0 ? data.map((e) => (

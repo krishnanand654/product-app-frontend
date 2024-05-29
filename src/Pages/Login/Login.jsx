@@ -3,13 +3,13 @@ import { useEffect, useState } from "react";
 import axios from 'axios';
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from 'react-redux';
-import { setLoginStatus } from '../../redux/actions'
+import { setLoginStatus, setAccessToken } from '../../redux/actions'
 import './Login.css';
 
 
 
 const Login = () => {
-    const loginStatus = useSelector(state => state.loginStatus);
+
 
     const dispatch = useDispatch();
 
@@ -89,6 +89,7 @@ const Login = () => {
                 localStorage.setItem("refreshToken", response.data.refreshToken);
                 localStorage.setItem("expiresIn", response.data.expiresIn);
                 dispatch(setLoginStatus(true));
+                dispatch(setAccessToken(response.data.accessToken));
                 setLoading(false);
                 navigate('/home');
             }

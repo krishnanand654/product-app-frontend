@@ -1,6 +1,7 @@
 const initialState = {
     insertStatus: false,
-    loginStatus: false
+    loginStatus: false,
+    token: null,
 };
 
 const reducer = (state = initialState, action) => {
@@ -14,6 +15,11 @@ const reducer = (state = initialState, action) => {
             return {
                 ...state,
                 loginStatus: action.payload
+            }
+        case 'SET_ACCESS_TOKEN':
+            return {
+                ...state,
+                token: action.payload
             }
         default:
             return state;

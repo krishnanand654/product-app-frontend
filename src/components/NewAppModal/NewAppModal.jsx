@@ -1,20 +1,18 @@
 /* eslint-disable react/prop-types */
 import { useEffect, useState } from "react";
 import DragAndDrop from "../Upload/DragAndDrop/DragAndDrop";
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure } from "@nextui-org/react";
+import { Button, useDisclosure } from "@nextui-org/react";
 import axios from "axios";
 import { Input } from "@nextui-org/react";
 import { useDispatch } from 'react-redux';
-import { setInsertStatus } from '../../redux/actions'
+import { setInsertStatus } from '../../redux/actions';
 import RefreshTokenHandler from "../../util/RefreshTokenHandler";
+import CustomModal from "../Modal/CustomModal";
 
-export default function AppModal() {
-
+export default function NewAppModal() {
     const dispatch = useDispatch();
-
     const token = localStorage.getItem("accessToken");
     const { isOpen, onOpen, onClose } = useDisclosure();
-    const [backdrop, setBackdrop] = useState('opaque');
     const [productData, setProductData] = useState({ name: '', price: '', description: '', image_id: '' });
     const [selectedFile, setSelectedFile] = useState(null);
     const [valid, setValid] = useState(false);
@@ -27,10 +25,7 @@ export default function AppModal() {
             onSubmit();
             setRetry(false);
         }
-
-
-    }, [retry])
-
+    }, [retry]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -40,46 +35,25 @@ export default function AppModal() {
         }));
     };
 
-
-    const handleOpen = (backdrop) => {
-        setBackdrop(backdrop);
-        onOpen();
-    };
-
-    const handleClose = () => {
-        productData.name = ''
-        productData.price = ''
-        productData.description = ''
-        setSelectedFile(null)
-        onClose()
-    }
-
     const handleFileSelect = (file) => {
         setSelectedFile(file);
     };
 
-
-
     useEffect(() => {
-
-        if (productData.name == '' || productData.price == '' || productData.description == '' || selectedFile == null) {
+        if (productData.name === '' || productData.price === '' || productData.description === '' || selectedFile === null) {
             setValid(false);
-
         } else {
             setValid(true);
-
         }
-    }, [productData, selectedFile])
+    }, [productData, selectedFile]);
 
     const onSubmit = async () => {
         setLoading(true);
         try {
-
             if (selectedFile) {
                 const formData = new FormData();
                 formData.append('file', selectedFile);
                 try {
-
                     const fileResponse = await axios.post('http://localhost:3000/files/upload', formData, {
                         headers: {
                             'Authorization': `Bearer ${token}`,
@@ -87,29 +61,31 @@ export default function AppModal() {
                         }
                     });
 
-
-                    if (fileResponse.status == 200) {
+                    if (fileResponse.status === 200) {
                         productData.image_id = fileResponse.data.fileId;
                     }
                 } catch (error) {
                     if (error.response.status === 403) {
                         try {
-                            RefreshTokenHandler();
-
+                            const refreshed = await RefreshTokenHandler();
+                            if (refreshed) {
+                                setRetry(true);
+                            } else {
+                                console.error("Error refreshing token:", error);
+                            }
                         } catch (refreshError) {
                             console.error("Error refreshing token:", refreshError);
                             setError(refreshError.response.data.error);
                         }
                     } else {
-                        console.error("Error inserting product:", error);
+                        console.error("Error uploading file:", error);
                         setError(error.response.data.error);
+                        setLoading(false);
+                        return;
                     }
                 }
-
-                setLoading(false);
             }
             try {
-
                 const dataResponse = await axios.post('http://localhost:3000/products/create', productData, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -121,29 +97,24 @@ export default function AppModal() {
                     console.log("Inserted");
                     setLoading(false);
                     dispatch(setInsertStatus(true));
-
                     setValid(false);
-                    productData.name = ''
-                    productData.price = ''
-                    productData.description = ''
-                    setSelectedFile(null)
-
+                    setProductData({ name: '', price: '', description: '', image_id: '' });
+                    setSelectedFile(null);
                     onClose();
                 } else {
                     console.log("Not inserted");
-
                     setLoading(false);
                 }
             } catch (error) {
                 if (error.response.status === 403) {
-                    console.log("try refreshing")
+                    console.log("Try refreshing token");
                     try {
-                        if (RefreshTokenHandler) {
+                        const refreshed = RefreshTokenHandler();
+                        if (refreshed) {
                             setRetry(true);
                         } else {
-                            console.log("login again")
+                            console.error("Error refreshing token:", error);
                         }
-
                     } catch (refreshError) {
                         console.error("Error refreshing token:", refreshError);
                         setError(refreshError.response.data.error);
@@ -154,12 +125,9 @@ export default function AppModal() {
                 }
             }
         } catch (error) {
-
             setLoading(false);
         }
-    }
-
-
+    };
 
     return (
         <>
@@ -167,39 +135,29 @@ export default function AppModal() {
                 <Button
                     variant="flat"
                     color="warning"
-                    onPress={() => handleOpen("blur")}
+                    onPress={onOpen}
                     className="capitalize mr-3 lg:mr-0"
                 >
-                    <img src="https://img.icons8.com/?size=19&id=db3aaXZdalCP&format=png&color=D1A052" /> Add Product
+                    <img src="https://img.icons8.com/?size=19&id=db3aaXZdalCP&format=png&color=D1A052" alt="Add Product" /> Add Product
                 </Button>
             </div>
-            <Modal backdrop={backdrop} isOpen={isOpen} onClose={handleClose}>
-                <ModalContent>
-                    {(handleClose) => (
-                        <>
-                            <ModalHeader className="flex flex-col gap-1">Insert Product</ModalHeader>
-                            <ModalBody>
-                                <div className="flex flex-wrap gap-6">
-                                    <Input type="text" label="Product Name" name="name" onChange={handleChange} className=" lg:w-96 md:w-full sm:w-full" isRequired />
-                                    <Input type="text" label="Description" name="description" onChange={handleChange} className=" lg:w-96 md:w-full sm:w-full" isRequired />
-                                    <Input type="number" label="Price" name="price" onChange={handleChange} className=" lg:w-96 md:w-full sm:w-full" isRequired />
-                                </div>
-
-                                <DragAndDrop onFileSelect={handleFileSelect} token={token} />
-                                {error && <p className="text-danger">{error}</p>}
-                            </ModalBody>
-                            <ModalFooter>
-                                <Button color="danger" variant="light" onPress={handleClose}>
-                                    Close
-                                </Button>
-                                <Button className="bg-black text-white" onPress={onSubmit} isDisabled={!valid} isLoading={loading}>
-                                    Add
-                                </Button>
-                            </ModalFooter>
-                        </>
-                    )}
-                </ModalContent>
-            </Modal>
+            <CustomModal
+                title="Insert Product"
+                isOpen={isOpen}
+                onClose={onClose}
+                onSubmit={onSubmit}
+                submitButtonText="Add"
+                isSubmitDisabled={!valid}
+                isSubmitLoading={loading}
+                error={error}
+            >
+                <div className="flex flex-wrap gap-6">
+                    <Input type="text" label="Product Name" name="name" onChange={handleChange} className="lg:w-96 md:w-full sm:w-full" isRequired />
+                    <Input type="text" label="Description" name="description" onChange={handleChange} className="lg:w-96 md:w-full sm:w-full" isRequired />
+                    <Input type="number" label="Price" name="price" onChange={handleChange} className="lg:w-96 md:w-full sm:w-full" isRequired />
+                </div>
+                <DragAndDrop onFileSelect={handleFileSelect} token={token} />
+            </CustomModal>
         </>
     );
 }

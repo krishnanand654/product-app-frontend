@@ -4,7 +4,7 @@ import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar } from "@
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { setLoginStatus } from "../../redux/actions";
-import AppModal from "../AppModal/AppModal";
+
 
 export default function AppNavbar() {
     const [isMenuOpen, setIsMenuOpen] = React.useState(false);

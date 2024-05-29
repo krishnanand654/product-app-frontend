@@ -1,5 +1,6 @@
 import { Button } from "@nextui-org/react"
-import UpdateModal from "../UpdateModal/UpdateModal"
+// import UpdateModal from "../UpdateModal/UpdateModal"
+import NewUpdateModal from "../NewUpdateModal/NewUpdateModal";
 
 /* eslint-disable react/prop-types */
 const Card = ({ name, description, image, price, onDelete, _id, image_id, }) => {
@@ -26,7 +27,7 @@ const Card = ({ name, description, image, price, onDelete, _id, image_id, }) => 
                 <div className="flex justify-end align-middle mt-3 gap-4 "  >
 
 
-                    <UpdateModal {...updateModalProps} />
+                    <NewUpdateModal {...updateModalProps} />
 
                     <Button variant="flat" color="danger" size="sm" className="mr-3 lg:mr-1" onClick={() => { onDelete(_id, image_id) }}>
                         Delete
