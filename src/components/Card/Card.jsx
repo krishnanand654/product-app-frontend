@@ -16,7 +16,7 @@ const Card = ({ name, description, image, price, onDelete, _id, image_id, }) => 
     return (
         <div className="lg:w-80 md:w-48 sm:w-24 cursor-pointer ">
             <div className="">
-                <img className="lg:h-full lg:w-full object-contain" src={image} />
+                <img className="lg:h-full lg:w-full object-contain " src={image} />
             </div>
             <div className="ml-3 lg:m-0 leading-7 flex justify-between h-full" style={{ alignItems: 'end' }}>
                 <div >

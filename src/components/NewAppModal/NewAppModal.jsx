@@ -4,10 +4,9 @@ import DragAndDrop from "../Upload/DragAndDrop/DragAndDrop";
 import { Button, useDisclosure } from "@nextui-org/react";
 import { Input } from "@nextui-org/react";
 import { useDispatch } from 'react-redux';
-import { setInsertStatus } from '../../redux/actions';
-
+import { setDataStatus } from '../../redux/actions';
 import CustomModal from "../Modal/CustomModal";
-import axiosInstance from "../../util/axios/api";
+import { insertProduct } from "../../util/axiosMethods/axiosMethods";
 
 export default function NewAppModal() {
     const dispatch = useDispatch();
@@ -42,44 +41,23 @@ export default function NewAppModal() {
     const onSubmit = async () => {
         setLoading(true);
         try {
-            if (selectedFile) {
-                const formData = new FormData();
-                formData.append('file', selectedFile);
-                try {
-                    const fileResponse = await axiosInstance.post('/files/upload', formData);
-
-                    if (fileResponse.status === 200) {
-                        productData.image_id = fileResponse.data.fileId;
-                    }
-                } catch (error) {
-                    console.error("Error uploading file:", error);
-                    setError(error.response.data.error);
-                    setLoading(false);
-                    return;
-                }
+            const insertStatus = await insertProduct(selectedFile, productData);
+            if (insertStatus) {
+                dispatch(setDataStatus(true));
+                setLoading(false);
+                setValid(false);
+                setProductData({ name: '', price: '', description: '', image_id: '' });
+                setSelectedFile(null);
+                onClose();
             }
-            try {
-                const dataResponse = await axiosInstance.post('/products/create', productData);
-
-                if (dataResponse.status === 201) {
-                    console.log("Inserted");
-                    setLoading(false);
-                    dispatch(setInsertStatus(true));
-                    setValid(false);
-                    setProductData({ name: '', price: '', description: '', image_id: '' });
-                    setSelectedFile(null);
-                    onClose();
-                } else {
-                    console.log("Not inserted");
-                    setLoading(false);
-                }
-            } catch (error) {
-                console.error("Error inserting product:", error);
-                setError(error.response.data.error);
-            }
-        } catch (error) {
+        } catch (e) {
+            setError(e.response?.data?.error || "An error occurred while inserting the product.");
+        } finally {
             setLoading(false);
         }
+
+
+
     };
 
     return (

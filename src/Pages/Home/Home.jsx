@@ -2,11 +2,10 @@ import { useEffect, useState } from 'react';
 import Card from '../../components/Card/Card';
 import AppNavbar from '../../components/AppNavbar/AppNavbar';
 import { useSelector, useDispatch } from 'react-redux';
-import { setInsertStatus } from '../../redux/actions';
+import { setDataStatus } from '../../redux/actions';
 import { message } from 'antd';
 import NewAppModal from '../../components/NewAppModal/NewAppModal';
-import axiosInstance from '../../util/axios/api';
-
+import { deleteProductById, fetchProducts } from '../../util/axiosMethods/axiosMethods';
 
 const Home = () => {
     const [data, setData] = useState([]);
@@ -18,71 +17,37 @@ const Home = () => {
         });
     };
 
-    const insertStatus = useSelector(state => state.insertStatus);
+    const dataStatus = useSelector(state => state.dataStatus);
     const dispatch = useDispatch();
-
-
 
 
     useEffect(() => {
         fetchData();
-        dispatch(setInsertStatus(false));
-    }, [insertStatus,]);
+        dispatch(setDataStatus(false));
+    }, [dataStatus,]);
 
 
 
     const fetchData = async () => {
-        try {
-            const response = await axiosInstance.get("/products/");
-
-            if (response && response.data) {
-                const products = response.data;
-                const productsWithImages = await Promise.all(products.map(async (product) => {
-                    try {
-                        const imageResponse = await axiosInstance.get(`/files/${product.image_id}`, {
-                            responseType: 'blob',
-                        });
-
-                        if (imageResponse) {
-                            const imageUrl = URL.createObjectURL(imageResponse.data);
-                            return { ...product, imageUrl };
-                        } else {
-                            return product;
-                        }
-                    } catch (error) {
-                        console.error(`Error fetching image for product ${product._id}:`, error.message || error);
-                        return product;
-                    }
-                }));
-
-                setData(productsWithImages);
-            } else {
-                console.error("Invalid response structure:", response);
-            }
-        } catch (error) {
-            console.error("Error fetching data:", error.message || error);
-        }
+        console.log();
+        const data = await fetchProducts();
+        setData(data);
     };
 
 
     const handleDelete = async (id, image_id) => {
-        try {
 
-            const productResponse = await axiosInstance.delete(`/products/delete/${id}`)
+        const deleteStatus = await deleteProductById(id, image_id);
 
-            if (productResponse.status === 200) {
-                const imageResponse = await axiosInstance.delete(`/files/delete/${image_id}`)
+        if (deleteStatus) {
+            success();
+            dispatch(setDataStatus(true));
 
-                if (imageResponse.status === 200) {
-                    console.log(imageResponse.data.message);
-                    success();
-                    dispatch(setInsertStatus(true));
-                }
-            }
-        } catch (error) {
-            console.error("Error fetching data:", error.message || error);
         }
+
     };
+
+
 
     return (
         <div>
@@ -95,7 +60,7 @@ const Home = () => {
                     <NewAppModal />
                 </div>
                 <div className='flex flex-wrap gap-6 justify-start '>
-                    {data.length > 0 ? data.map((e) => (
+                    {data.length > 0 ? data.slice().reverse().map((e) => (
                         <div key={e._id}>
                             <Card
                                 name={e.name}

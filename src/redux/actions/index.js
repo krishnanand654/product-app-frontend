@@ -1,5 +1,5 @@
-export const setInsertStatus = (status) => ({
-    type: 'SET_INSERT_STATUS',
+export const setDataStatus = (status) => ({
+    type: 'SET_DATA_STATUS',
     payload: status
 });
 

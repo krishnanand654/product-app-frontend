@@ -16,7 +16,7 @@ const DragAndDrop = ({ onFileSelect }) => {
         beforeUpload: (file) => {
             setFileList([file]);
             onFileSelect(file);
-            return false; // Prevent automatic upload
+            return false;
         },
 
         onRemove: (file) => {

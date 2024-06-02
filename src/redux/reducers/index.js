@@ -1,15 +1,15 @@
 const initialState = {
-    insertStatus: false,
+    dataStatus: false,
     loginStatus: false,
     token: null,
 };
 
 const reducer = (state = initialState, action) => {
     switch (action.type) {
-        case 'SET_INSERT_STATUS':
+        case 'SET_DATA_STATUS':
             return {
                 ...state,
-                insertStatus: action.payload
+                dataStatus: action.payload
             };
         case 'SET_LOGIN_STATUS':
             return {
