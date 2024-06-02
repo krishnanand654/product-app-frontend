@@ -2,12 +2,12 @@
 import { useEffect, useState } from "react";
 import DragAndDrop from "../Upload/DragAndDrop/DragAndDrop";
 import { Button, useDisclosure } from "@nextui-org/react";
-import axios from "axios";
 import { Input } from "@nextui-org/react";
 import { useDispatch } from 'react-redux';
 import { setInsertStatus } from '../../redux/actions';
-import RefreshTokenHandler from "../../util/RefreshTokenHandler";
+
 import CustomModal from "../Modal/CustomModal";
+import axiosInstance from "../../util/axios/api";
 
 export default function NewAppModal() {
     const dispatch = useDispatch();
@@ -18,14 +18,6 @@ export default function NewAppModal() {
     const [valid, setValid] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-    const [retry, setRetry] = useState(false);
-
-    useEffect(() => {
-        if (retry) {
-            onSubmit();
-            setRetry(false);
-        }
-    }, [retry]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -54,44 +46,20 @@ export default function NewAppModal() {
                 const formData = new FormData();
                 formData.append('file', selectedFile);
                 try {
-                    const fileResponse = await axios.post('http://localhost:3000/files/upload', formData, {
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'multipart/form-data',
-                        }
-                    });
+                    const fileResponse = await axiosInstance.post('/files/upload', formData);
 
                     if (fileResponse.status === 200) {
                         productData.image_id = fileResponse.data.fileId;
                     }
                 } catch (error) {
-                    if (error.response.status === 403) {
-                        try {
-                            const refreshed = await RefreshTokenHandler();
-                            if (refreshed) {
-                                setRetry(true);
-                            } else {
-                                console.error("Error refreshing token:", error);
-                            }
-                        } catch (refreshError) {
-                            console.error("Error refreshing token:", refreshError);
-                            setError(refreshError.response.data.error);
-                        }
-                    } else {
-                        console.error("Error uploading file:", error);
-                        setError(error.response.data.error);
-                        setLoading(false);
-                        return;
-                    }
+                    console.error("Error uploading file:", error);
+                    setError(error.response.data.error);
+                    setLoading(false);
+                    return;
                 }
             }
             try {
-                const dataResponse = await axios.post('http://localhost:3000/products/create', productData, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                    }
-                });
+                const dataResponse = await axiosInstance.post('/products/create', productData);
 
                 if (dataResponse.status === 201) {
                     console.log("Inserted");
@@ -106,23 +74,8 @@ export default function NewAppModal() {
                     setLoading(false);
                 }
             } catch (error) {
-                if (error.response.status === 403) {
-                    console.log("Try refreshing token");
-                    try {
-                        const refreshed = RefreshTokenHandler();
-                        if (refreshed) {
-                            setRetry(true);
-                        } else {
-                            console.error("Error refreshing token:", error);
-                        }
-                    } catch (refreshError) {
-                        console.error("Error refreshing token:", refreshError);
-                        setError(refreshError.response.data.error);
-                    }
-                } else {
-                    console.error("Error inserting product:", error);
-                    setError(error.response.data.error);
-                }
+                console.error("Error inserting product:", error);
+                setError(error.response.data.error);
             }
         } catch (error) {
             setLoading(false);

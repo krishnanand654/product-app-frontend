@@ -1,13 +1,12 @@
-import axios from 'axios';
 import { useEffect, useState } from 'react';
 import Card from '../../components/Card/Card';
 import AppNavbar from '../../components/AppNavbar/AppNavbar';
 import { useSelector, useDispatch } from 'react-redux';
 import { setInsertStatus } from '../../redux/actions';
 import { message } from 'antd';
-import RefreshTokenHandler from '../../util/RefreshTokenHandler';
 import NewAppModal from '../../components/NewAppModal/NewAppModal';
-// import useRefreshToken from '../../util/RefreshTokenHandler';
+import axiosInstance from '../../util/axios/api';
+
 
 const Home = () => {
     const [data, setData] = useState([]);
@@ -20,37 +19,27 @@ const Home = () => {
     };
 
     const insertStatus = useSelector(state => state.insertStatus);
-    const newtoken = useSelector(state => state.token);
     const dispatch = useDispatch();
-    const token = localStorage.getItem("accessToken") || newtoken;
+
 
 
 
     useEffect(() => {
         fetchData();
         dispatch(setInsertStatus(false));
-
     }, [insertStatus,]);
 
 
 
     const fetchData = async () => {
-
         try {
-            const response = await axios.get("http://localhost:3000/products/", {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
+            const response = await axiosInstance.get("/products/");
 
             if (response && response.data) {
                 const products = response.data;
                 const productsWithImages = await Promise.all(products.map(async (product) => {
                     try {
-                        const imageResponse = await axios.get(`http://localhost:3000/files/${product.image_id}`, {
-                            headers: {
-                                Authorization: `Bearer ${token}`,
-                            },
+                        const imageResponse = await axiosInstance.get(`/files/${product.image_id}`, {
                             responseType: 'blob',
                         });
 
@@ -71,34 +60,18 @@ const Home = () => {
                 console.error("Invalid response structure:", response);
             }
         } catch (error) {
-            if (error.response && error.response.status === 403) {
-                const refreshed = await RefreshTokenHandler();
-                if (refreshed) {
-                    dispatch(setInsertStatus(true));
-                }
-            } else {
-                console.error("Error fetching data:", error.message || error);
-            }
+            console.error("Error fetching data:", error.message || error);
         }
-
     };
 
 
     const handleDelete = async (id, image_id) => {
         try {
-            const token = localStorage.getItem("accessToken");
-            const productResponse = await axios.delete(`http://localhost:3000/products/delete/${id}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
+
+            const productResponse = await axiosInstance.delete(`/products/delete/${id}`)
 
             if (productResponse.status === 200) {
-                const imageResponse = await axios.delete(`http://localhost:3000/files/delete/${image_id}`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
+                const imageResponse = await axiosInstance.delete(`/files/delete/${image_id}`)
 
                 if (imageResponse.status === 200) {
                     console.log(imageResponse.data.message);
@@ -107,14 +80,7 @@ const Home = () => {
                 }
             }
         } catch (error) {
-            if (error.response && error.response.status === 403) {
-                const refreshed = await RefreshTokenHandler();
-                if (refreshed) {
-                    handleDelete(id, image_id); // Retry the delete operation
-                }
-            } else {
-                console.error("Error deleting product:", error);
-            }
+            console.error("Error fetching data:", error.message || error);
         }
     };
 

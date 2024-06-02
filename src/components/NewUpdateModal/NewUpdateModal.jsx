@@ -1,13 +1,12 @@
 /* eslint-disable react/prop-types */
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { Button, Input, useDisclosure } from "@nextui-org/react";
 import DragAndDrop from "../Upload/DragAndDrop/DragAndDrop";
 import { useDispatch } from "react-redux";
 import { setInsertStatus } from "../../redux/actions";
-import RefreshTokenHandler from "../../util/RefreshTokenHandler";
 import { message } from 'antd';
 import CustomModal from "../Modal/CustomModal";
+import axiosInstance from "../../util/axios/api";
 
 export default function NewUpdateModal({ name, description, image, price, _id, image_id }) {
     const { isOpen, onOpen, onClose } = useDisclosure();
@@ -15,7 +14,6 @@ export default function NewUpdateModal({ name, description, image, price, _id, i
     const [newDescription, setNewDescription] = useState(description);
     const [newPrice, setNewPrice] = useState(price);
     const [newImageId, setNewImageId] = useState(null);
-    const [retry, setRetry] = useState(false);
     const [messageApi, contextHolder] = message.useMessage();
     const [selectedFile, setSelectedFile] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -30,13 +28,6 @@ export default function NewUpdateModal({ name, description, image, price, _id, i
     };
 
     useEffect(() => {
-        if (retry) {
-            handleSubmit();
-            setRetry(false);
-        }
-    }, [retry]);
-
-    useEffect(() => {
         if (newImageId) {
             handleUpdateProduct();
         }
@@ -47,18 +38,12 @@ export default function NewUpdateModal({ name, description, image, price, _id, i
     };
 
     const handleUpdateProduct = async (imageId) => {
-        console.log(imageId == null ? true : false);
         try {
-            const token = localStorage.getItem("accessToken");
-            const response = await axios.put(`http://localhost:3000/products/update/${_id}`, {
+            const response = await axiosInstance.put(`/products/update/${_id}`, {
                 name: newName,
                 description: newDescription,
                 price: newPrice,
                 image_id: imageId == null ? image_id : imageId
-            }, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
             });
 
             if (response.status === 200) {
@@ -69,17 +54,10 @@ export default function NewUpdateModal({ name, description, image, price, _id, i
                 onClose();
             }
         } catch (error) {
-            if (error.response && error.response.status === 403) {
-                const refreshed = RefreshTokenHandler();
-                if (refreshed) {
-                    setRetry(true);
-                } else {
-                    console.error("Error refreshing token:", error);
-                }
-            } else {
-                console.error("Error uploading", error);
-                setLoading(false);
-            }
+
+            console.error("Error uploading", error);
+            setLoading(false);
+
         }
     };
 
@@ -89,31 +67,16 @@ export default function NewUpdateModal({ name, description, image, price, _id, i
             try {
                 const formData = new FormData();
                 formData.append('file', selectedFile);
-                const token = localStorage.getItem("accessToken");
 
-                const fileResponse = await axios.put(`http://localhost:3000/files/update/${image_id}`, formData, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'multipart/form-data',
-                    }
-                });
+                const fileResponse = await axiosInstance.put(`/files/update/${image_id}`, formData);
 
                 if (fileResponse.status === 200) {
                     handleUpdateProduct(fileResponse.data.fileId);
                 }
             } catch (error) {
-                if (error.response && error.response.status === 403) {
-                    const refreshed = await RefreshTokenHandler();
-                    if (refreshed) {
-                        setRetry(true);
-                    } else {
-                        console.error("Error refreshing token:", error);
-                    }
-                } else {
-                    console.error("Error inserting product:", error);
-                    setError(error.response.data.error);
-                    setLoading(false);
-                }
+                console.error("Error inserting product:", error);
+                setError(error.response.data.error);
+                setLoading(false);
             }
         } else {
             handleUpdateProduct();
