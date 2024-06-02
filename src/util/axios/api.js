@@ -50,7 +50,7 @@ axiosInstance.interceptors.response.use(
                 }
             } catch (error) {
                 console.error('Error fetching data:', error);
-
+                window.location.href = "/";
             }
         }
 
