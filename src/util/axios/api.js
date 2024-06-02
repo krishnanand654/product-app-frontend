@@ -33,10 +33,10 @@ axiosInstance.interceptors.response.use(
         if (error.response && error.response.status === 403 && !originalRequest._retry) {
             originalRequest._retry = true;
 
-            const refreshToken = localStorage.getItem('refreshToken');
+            // const refreshToken = localStorage.getItem('refreshToken');
             try {
-                const response = await axios.post('http://localhost:3000/auth/refresh-token', {
-                    "refreshToken": refreshToken
+                const response = await axios.get('http://localhost:3000/auth/refresh-token', {
+                    withCredentials: true
                 });
                 if (response) {
 
@@ -50,7 +50,7 @@ axiosInstance.interceptors.response.use(
                 }
             } catch (error) {
                 console.error('Error fetching data:', error);
-                window.location.href = "/";
+                // window.location.href = "/";
             }
         }
 

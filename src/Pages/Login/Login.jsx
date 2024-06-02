@@ -2,7 +2,7 @@ import { Input, Button } from "@nextui-org/react";
 import { useEffect, useState } from "react";
 import axios from 'axios';
 import { useNavigate } from "react-router-dom";
-import { useSelector, useDispatch } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { setLoginStatus, setAccessToken } from '../../redux/actions'
 import './Login.css';
 
@@ -68,8 +68,6 @@ const Login = () => {
             }
         }
 
-
-
     }, [credentials])
 
 
@@ -82,7 +80,7 @@ const Login = () => {
             const response = await axios.post("http://localhost:3000/auth/login", {
                 username: credentials.username,
                 password: credentials.password
-            });
+            }, { withCredentials: true });
             if (response.status == 200) {
                 localStorage.setItem("username", credentials.username);
                 localStorage.setItem("accessToken", response.data.accessToken);
