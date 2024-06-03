@@ -84,8 +84,6 @@ const Login = () => {
             if (response.status == 200) {
                 localStorage.setItem("username", credentials.username);
                 localStorage.setItem("accessToken", response.data.accessToken);
-                localStorage.setItem("refreshToken", response.data.refreshToken);
-                localStorage.setItem("expiresIn", response.data.expiresIn);
                 dispatch(setLoginStatus(true));
                 dispatch(setAccessToken(response.data.accessToken));
                 setLoading(false);
